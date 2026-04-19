@@ -1,2 +1,17 @@
-﻿{
+﻿
+{
+  "name": "ab_star",
+  "description": "Jazyk (ab)* - reťazce zložené z opakujúceho sa vzoru ab",
+  "alphabet": ["a", "b"],
+  "states": ["q0", "q1", "q2"],
+  "initial_state": "q0",
+  "accepting_states": ["q0"],
+  "transitions": [
+    { "from": "q0", "input": "a", "to": "q1" },
+    { "from": "q1", "input": "b", "to": "q0" },
+    { "from": "q0", "input": "b", "to": "q2" },
+    { "from": "q1", "input": "a", "to": "q2" },
+    { "from": "q2", "input": "a", "to": "q2" },
+    { "from": "q2", "input": "b", "to": "q2" }
+  ]
 }

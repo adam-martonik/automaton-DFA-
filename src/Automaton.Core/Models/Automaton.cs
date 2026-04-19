@@ -2,25 +2,16 @@
 
 public class Automaton
 {
-    public string Name { get; set; }
-    public string Description { get; set; }
-    public List<string> Alphabet { get; set; }
-    public List<State> States { get; set; }
-    public string InitialState { get; set; }
-    public List<Transition> Transitions { get; set; }
+    public required string Name { get; set; }
+    public required string Description { get; set; }
+    public required string InitialState { get; set; }
+    public List<string> Alphabet { get; set; } = new();
+    public List<State> States { get; set; } = new();
+    public List<Transition> Transitions { get; set; } = new();
 
-    public Automaton()
-    {
-        Alphabet = new List<string>();
-        States = new List<State>();
-        Transitions = new List<Transition>();
-    }
-
-    // Vráti stav podľa mena
     public State? GetState(string name)
         => States.FirstOrDefault(s => s.Name == name);
 
-    // Vráti nasledujúci stav podľa aktuálneho stavu a vstupu
     public string? GetNextState(string currentState, char input)
     {
         var transition = Transitions.FirstOrDefault(t =>
@@ -29,7 +20,6 @@ public class Automaton
         return transition?.To;
     }
 
-    // Je daný stav akceptačný?
     public bool IsAccepting(string stateName)
         => States.Any(s => s.Name == stateName && s.IsAccepting);
 }

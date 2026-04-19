@@ -24,35 +24,58 @@ public class TransitionLoader
         var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
 
+        // Helper na čitateľné chyby
+        string GetString(string key)
+        {
+            if (!root.TryGetProperty(key, out var prop))
+                throw new KeyNotFoundException($"JSON neobsahuje povinný kľúč: '{key}'");
+            return prop.GetString() ?? "";
+        }
+
         var automaton = new Models.Automaton
         {
-            Name = root.GetProperty("name").GetString() ?? "unknown",
-            Description = root.GetProperty("description").GetString() ?? "",
-            InitialState = root.GetProperty("initial_state").GetString() ?? ""
+            Name        = GetString("name"),
+            Description = GetString("description"),
+            InitialState = GetString("initial_state")
         };
 
-        // Načítaj abecedu
-        foreach (var symbol in root.GetProperty("alphabet").EnumerateArray())
+        // Abeceda
+        if (!root.TryGetProperty("alphabet", out var alphabet))
+            throw new KeyNotFoundException("JSON neobsahuje kľúč: 'alphabet'");
+        foreach (var symbol in alphabet.EnumerateArray())
             automaton.Alphabet.Add(symbol.GetString() ?? "");
 
-        // Načítaj akceptačné stavy
+        // Akceptačné stavy
+        if (!root.TryGetProperty("accepting_states", out var acceptingRaw))
+            throw new KeyNotFoundException("JSON neobsahuje kľúč: 'accepting_states'");
         var acceptingStates = new HashSet<string>();
-        foreach (var s in root.GetProperty("accepting_states").EnumerateArray())
+        foreach (var s in acceptingRaw.EnumerateArray())
             acceptingStates.Add(s.GetString() ?? "");
 
-        // Načítaj stavy
-        foreach (var s in root.GetProperty("states").EnumerateArray())
+        // Stavy
+        if (!root.TryGetProperty("states", out var statesRaw))
+            throw new KeyNotFoundException("JSON neobsahuje kľúč: 'states'");
+        foreach (var s in statesRaw.EnumerateArray())
         {
             string name = s.GetString() ?? "";
             automaton.States.Add(new State(name, acceptingStates.Contains(name)));
         }
 
-        // Načítaj prechody
-        foreach (var t in root.GetProperty("transitions").EnumerateArray())
+        // Prechody
+        if (!root.TryGetProperty("transitions", out var transitionsRaw))
+            throw new KeyNotFoundException("JSON neobsahuje kľúč: 'transitions'");
+        foreach (var t in transitionsRaw.EnumerateArray())
         {
-            string from = t.GetProperty("from").GetString() ?? "";
-            string inputStr = t.GetProperty("input").GetString() ?? "";
-            string to = t.GetProperty("to").GetString() ?? "";
+            if (!t.TryGetProperty("from", out var fromProp))
+                throw new KeyNotFoundException("Prechod neobsahuje kľúč: 'from'");
+            if (!t.TryGetProperty("input", out var inputProp))
+                throw new KeyNotFoundException("Prechod neobsahuje kľúč: 'input'");
+            if (!t.TryGetProperty("to", out var toProp))
+                throw new KeyNotFoundException("Prechod neobsahuje kľúč: 'to'");
+
+            string from     = fromProp.GetString() ?? "";
+            string inputStr = inputProp.GetString() ?? "";
+            string to       = toProp.GetString() ?? "";
 
             if (inputStr.Length != 1)
                 throw new FormatException($"Vstup prechodu musí byť jeden znak, dostali sme: '{inputStr}'");
@@ -60,9 +83,7 @@ public class TransitionLoader
             automaton.Transitions.Add(new Transition(from, inputStr[0], to));
         }
 
-        // Validácia
         Validate(automaton);
-
         return automaton;
     }
 

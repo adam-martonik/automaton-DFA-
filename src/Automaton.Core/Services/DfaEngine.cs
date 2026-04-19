@@ -1,4 +1,6 @@
-﻿namespace Automaton.Core.Services;
+﻿using Automaton.Core.Models;
+
+namespace Automaton.Core.Services;
 
 public class DfaEngine
 {
@@ -16,29 +18,19 @@ public class DfaEngine
 
         foreach (char symbol in input)
         {
-            // Je symbol v abecede?
             if (!_automaton.Alphabet.Contains(symbol.ToString()))
             {
-                return new DfaResult(
-                    accepted: false,
-                    input: input,
-                    steps: steps,
-                    reason: $"Symbol '{symbol}' nie je v abecede automatu"
-                );
+                return new DfaResult(false, input, steps,
+                    $"Symbol '{symbol}' nie je v abecede automatu");
             }
 
             string? nextState = _automaton.GetNextState(currentState, symbol);
 
-            // Neexistuje prechod – mŕtvy stav
             if (nextState == null)
             {
                 steps.Add(new DfaStep(currentState, symbol, null));
-                return new DfaResult(
-                    accepted: false,
-                    input: input,
-                    steps: steps,
-                    reason: $"Neexistuje prechod z '{currentState}' pre '{symbol}'"
-                );
+                return new DfaResult(false, input, steps,
+                    $"Neexistuje prechod z '{currentState}' pre '{symbol}'");
             }
 
             steps.Add(new DfaStep(currentState, symbol, nextState));
@@ -47,24 +39,18 @@ public class DfaEngine
 
         bool isAccepted = _automaton.IsAccepting(currentState);
 
-        return new DfaResult(
-            accepted: isAccepted,
-            input: input,
-            steps: steps,
-            reason: isAccepted
+        return new DfaResult(isAccepted, input, steps,
+            isAccepted
                 ? $"Automat skončil v akceptačnom stave '{currentState}'"
-                : $"Automat skončil v neakceptačnom stave '{currentState}'"
-        );
+                : $"Automat skončil v neakceptačnom stave '{currentState}'");
     }
 }
 
-// Jeden krok automatu
 public record DfaStep(string FromState, char Input, string? ToState)
 {
     public override string ToString() => $"{FromState} --{Input}--> {ToState ?? "DEAD"}";
 }
 
-// Výsledok behu automatu
 public record DfaResult(bool Accepted, string Input, List<DfaStep> Steps, string Reason)
 {
     public void PrintToConsole()

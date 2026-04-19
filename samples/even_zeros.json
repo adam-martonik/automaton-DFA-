@@ -1,2 +1,14 @@
 ﻿{
+  "name": "even_zeros",
+  "description": "Jazyk slov nad {0,1} kde počet núl je párny",
+  "alphabet": ["0", "1"],
+  "states": ["q0", "q1"],
+  "initial_state": "q0",
+  "accepting_states": ["q0"],
+  "transitions": [
+    { "from": "q0", "input": "0", "to": "q1" },
+    { "from": "q0", "input": "1", "to": "q0" },
+    { "from": "q1", "input": "0", "to": "q0" },
+    { "from": "q1", "input": "1", "to": "q1" }
+  ]
 }
