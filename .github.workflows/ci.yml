@@ -1,0 +1,65 @@
+﻿stages:
+  - build
+  - test
+  - publish
+
+variables:
+  DOTNET_VERSION: "8.0"
+  PROJECT_NAME: "DfaSimulator"
+
+# ───────────────────────────────────────
+# STAGE 1 – BUILD
+# ───────────────────────────────────────
+build:
+  stage: build
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  script:
+    - echo "🔨 Zostavujem projekt..."
+    - dotnet restore src/DfaSimulator.sln
+    - dotnet build src/DfaSimulator.sln --no-restore --configuration Release
+  artifacts:
+    paths:
+      - src/**/bin/Release/
+    expire_in: 1 hour
+
+# ───────────────────────────────────────
+# STAGE 2 – TEST
+# ───────────────────────────────────────
+test:
+  stage: test
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  script:
+    - echo "🧪 Spúšťam unit testy..."
+    - dotnet test tests/DfaSimulator.Tests/DfaSimulator.Tests.csproj
+      --no-build
+      --configuration Release
+      --logger "junit;LogFilePath=test-results.xml"
+  artifacts:
+    when: always
+    reports:
+      junit: tests/DfaSimulator.Tests/test-results.xml
+    expire_in: 1 week
+  dependencies:
+    - build
+
+# ───────────────────────────────────────
+# STAGE 3 – PUBLISH
+# ───────────────────────────────────────
+publish:
+  stage: publish
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  script:
+    - echo "📦 Publikujem aplikáciu..."
+    - dotnet publish src/DfaSimulator.CLI/DfaSimulator.CLI.csproj
+      --configuration Release
+      --output publish/
+  artifacts:
+    name: "dfa-simulator-$CI_COMMIT_SHORT_SHA"
+    paths:
+      - publish/
+    expire_in: 1 week
+  dependencies:
+    - build
+  only:
+    - main
+    - develop
